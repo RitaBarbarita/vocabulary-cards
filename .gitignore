@@ -1,0 +1,10 @@
+outputs/
+build/
+obj/
+*.user
+NativeData/
+BrowserData/
+LocalAI/
+AI/
+ai-preferences.json
+local-ai-seed.txt

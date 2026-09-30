@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+ <PropertyGroup><OutputType>WinExe</OutputType><AssemblyName>EnglishVocabDB</AssemblyName><RootNamespace>Vocab</RootNamespace><TargetFrameworkVersion>v4.8</TargetFrameworkVersion><OutputPath>build\</OutputPath><ApplicationIcon>Assets\app-icon.ico</ApplicationIcon><StartupObject>Vocab.Entry</StartupObject><LangVersion>5</LangVersion><Optimize>true</Optimize></PropertyGroup>
+ <ItemGroup><Reference Include="System"/><Reference Include="System.Core"/><Reference Include="System.Web.Extensions"/><Reference Include="System.Net.Http"/><Reference Include="System.IO.Compression"/><Reference Include="System.IO.Compression.FileSystem"/><Reference Include="System.Xml"/><Reference Include="System.Xml.Linq"/><Reference Include="System.Xaml"/><Reference Include="WindowsBase"/><Reference Include="PresentationCore"/><Reference Include="PresentationFramework"/></ItemGroup>
+ <ItemGroup><Compile Include="*.cs" Exclude="Installer.cs"/><EmbeddedResource Include="Theme.xaml"><LogicalName>Theme.xaml</LogicalName></EmbeddedResource><EmbeddedResource Include="Icons\*.png"><LogicalName>Icons.%(Filename)%(Extension)</LogicalName></EmbeddedResource><EmbeddedResource Include="fixtures\excel-biff8.xls"><LogicalName>Fixtures.Excel</LogicalName></EmbeddedResource></ItemGroup>
+ <ItemGroup><None Include="App.config"/></ItemGroup>
+ <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
+</Project>

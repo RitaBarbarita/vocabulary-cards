@@ -1,0 +1,3 @@
+@echo off
+powershell.exe -NoProfile -WindowStyle Hidden -Command "$base=[Environment]::GetFolderPath('LocalApplicationData'); $target=[IO.Path]::GetFullPath([IO.Path]::Combine($base,'Programs','English Vocab DB')); $expected=[IO.Path]::Combine($base,'Programs','English Vocab DB'); if($target -ne $expected){exit 1}; foreach($place in @('Programs','DesktopDirectory')){Remove-Item -LiteralPath ([IO.Path]::Combine([Environment]::GetFolderPath($place),'English Vocab DB.lnk')) -Force -ErrorAction SilentlyContinue}; Remove-Item -LiteralPath 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\EnglishVocabDB' -Recurse -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 2; Remove-Item -LiteralPath $target -Recurse -Force -ErrorAction SilentlyContinue"
+exit /b
