@@ -1,10 +1,10 @@
-# English Vocab DB — Native Windows 2.0.1
+# English Vocab DB — Native Windows 1.0
 
 C# / WPF vocabulary application with a classic Windows interface. The main application has no browser, WebView, JavaScript or Node.js runtime dependency.
 
 ## Install
 
-Windows 10/11, x64, .NET Framework 4.8. Close the previous app, then run `English-Vocab-DB-Native-Setup-2.0.1.exe`. Choose the language used for translations and explanations. Interface labels stay in English.
+Windows 10/11, x64, .NET Framework 4.8. Close the previous app, then run `English-Vocab-DB-Native-Setup-1.0.exe`. Choose the language used for translations and explanations. Interface labels stay in English.
 
 The application uses the existing local Qwen3.5 9B model through its private Ollama endpoint on `127.0.0.1:11437`. An API key is not required. If AI files are missing, use **Set up AI**; this can download about 8.1 GB and needs about 15 GB free space. AI is optional; manual cards and study features work independently. Generated text is a draft to review and save explicitly.
 
@@ -41,3 +41,11 @@ Optional `--ai-test=<config.json>` and `--cancel-test=<config.json>` use a JSON 
 The installer supports `--extract-test=<folder>`, `--upgrade-test=<folder>` and `--render-test=<folder>` for isolated package, upgrade-preservation and installer-render checks.
 
 The model can make linguistic mistakes; review generated cards. Full AI speed depends on available memory and GPU. This release is for Windows; it is not an iOS application.
+
+## Version and contact
+
+The main window shows a quiet footer: Version 1.0 and systemfolder.dev@gmail.com.
+
+## Repository screenshots
+
+Run `build\EnglishVocabDB.exe --screenshots <absolute-output-folder>` to render five showcase PNGs from synthetic demonstration cards. This mode uses an isolated temporary database and never reads personal vocabulary. The output folder also contains demo fixtures; publish only the five numbered PNG files.

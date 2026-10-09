@@ -9,13 +9,13 @@ using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
 [assembly:AssemblyTitle("English Vocab DB Setup")]
-[assembly:AssemblyVersion("2.0.1.0")]
-[assembly:AssemblyFileVersion("2.0.1.0")]
+[assembly:AssemblyVersion("1.0.0.0")]
+[assembly:AssemblyFileVersion("1.0.0.0")]
 namespace Vocab
 {
  public static class Install
  {
-  const string Name="English Vocab DB",IconName="app-icon-native-2.0.1.ico";
+  const string Name="English Vocab DB",IconName="app-icon-native-1.0.ico";
   [DllImport("shell32.dll",CharSet=CharSet.Unicode)]static extern void SHChangeNotify(uint eventId,uint flags,string item,IntPtr unused);
   [STAThread]public static int Main(string[] args)
   {
@@ -29,7 +29,7 @@ namespace Vocab
   static void Shortcuts(string folder)
   {
    var shellType=Type.GetTypeFromProgID("WScript.Shell");if(shellType==null)throw new InvalidOperationException("Windows shortcuts are unavailable.");dynamic shell=Activator.CreateInstance(shellType);foreach(var dest in new[]{Environment.SpecialFolder.DesktopDirectory,Environment.SpecialFolder.Programs}){string path=Path.Combine(Environment.GetFolderPath(dest),Name+".lnk");dynamic shortcut=shell.CreateShortcut(path);shortcut.TargetPath=Path.Combine(folder,"EnglishVocabDB.exe");shortcut.WorkingDirectory=folder;shortcut.IconLocation=Path.Combine(folder,IconName)+",0";shortcut.Description=Name;shortcut.Save();SHChangeNotify(0x2000,0x1005,path,IntPtr.Zero);}
-   using(var key=Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\EnglishVocabDB")){key.SetValue("DisplayName",Name);key.SetValue("DisplayVersion","2.0.1");key.SetValue("Publisher","Local application");key.SetValue("InstallLocation",folder);key.SetValue("DisplayIcon",Path.Combine(folder,IconName));key.SetValue("UninstallString","\""+Path.Combine(folder,"uninstall.cmd")+"\"");key.SetValue("NoModify",1);key.SetValue("NoRepair",1);}
+   using(var key=Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\EnglishVocabDB")){key.SetValue("DisplayName",Name);key.SetValue("DisplayVersion","1.0");key.SetValue("Publisher","Local application");key.SetValue("InstallLocation",folder);key.SetValue("DisplayIcon",Path.Combine(folder,IconName));key.SetValue("UninstallString","\""+Path.Combine(folder,"uninstall.cmd")+"\"");key.SetValue("NoModify",1);key.SetValue("NoRepair",1);}
   }
   sealed class InstallWindow:RetroWindow
   {

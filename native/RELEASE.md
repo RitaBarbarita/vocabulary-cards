@@ -1,10 +1,10 @@
-# Native Windows release 2.0.1
+# Native Windows release 1.0
 
 The current application is C# / WPF, built by `native/build.ps1`. Do not package the historical Edge launcher or regenerate the UI from the original web sources.
 
 Preserve the accepted Windows 95 graphic icons, pink app icon, gray/navy windows, white information panels, blue A/red B labels with black dialogue text, muted Add Card accent, adjacent synonyms/antonyms and measured PNG export. Labels are English; AI explanations follow the installation language.
 
-Release artifact: `outputs/English-Vocab-DB-Native-Setup-2.0.1.exe`.
+Release artifact: `outputs/English-Vocab-DB-Native-Setup-1.0.exe`.
 
 Verification:
 
@@ -20,4 +20,6 @@ Migration uses Edge only once to export an existing browser profile, with origin
 
 Model answers remain drafts and may contain language errors. Windows 10/11 x64 and .NET Framework 4.8 are required; GPU speed is not a requirement for manual cards.
 
-2.0.1 corrects the custom window frame and title-button layout, adds per-monitor maximize bounds, fixes dropdown interaction and readable selected labels, centers rows, appends more cards without rebuilding the scroll view, and restores the accepted white tag panels, New color and example dividers. Existing native data, language preferences and AI files are unchanged.
+1.0 corrects the custom window frame and title-button layout, adds per-monitor maximize bounds, fixes dropdown interaction and readable selected labels, centers rows, appends more cards without rebuilding the scroll view, and restores the accepted white tag panels, New color and example dividers. Existing native data, language preferences and AI files are unchanged.
+
+The public version is 1.0, as requested. Application and installer file versions and Windows uninstall metadata are 1.0. The main window includes a discreet version/contact footer. Five styled repository screenshots show synthetic cards; personal vocabulary, images and AI model files are excluded.

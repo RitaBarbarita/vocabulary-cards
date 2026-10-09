@@ -9,8 +9,8 @@ using System.Windows.Controls;
 using System.Windows.Media;
 [assembly:AssemblyTitle("English Vocab DB")]
 [assembly:AssemblyDescription("Native Windows vocabulary application")]
-[assembly:AssemblyVersion("2.0.1.0")]
-[assembly:AssemblyFileVersion("2.0.1.0")]
+[assembly:AssemblyVersion("1.0.0.0")]
+[assembly:AssemblyFileVersion("1.0.0.0")]
 namespace Vocab
 {
  public static class Entry
@@ -28,6 +28,7 @@ namespace Vocab
    if(args.Length>0 && args[0].StartsWith("--cancel-test="))return NativeTests.CancelTest(args[0].Substring(14));
    if(args.Length>0 && args[0]=="--self-test")return NativeTests.Run(args.Length>1?args[1]:Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"test-output"));
    if(args.Length>1 && args[0]=="--ui-test")return UIRegressionTests.Run(args[1]);
+   if(args.Length>1 && args[0]=="--screenshots")return Showcase.Run(args[1]);
    bool owner;using(var mutex=new Mutex(true,"Local\\EnglishVocabDB.Native."+BitConverter.ToString(System.Security.Cryptography.SHA256.Create().ComputeHash(System.Text.Encoding.UTF8.GetBytes(DataRoot))).Replace("-","").Substring(0,16),out owner)){
     if(!owner){Retro.Message("English Vocab DB is already open.");return 0;}
     try{var store=new Store(DataRoot);string profile=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"English Vocab DB","BrowserData");string html=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"english-vocab-db.html");
