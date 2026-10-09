@@ -1,4 +1,4 @@
-# Vocab Cards
+# Vocabulary Cards
 
 A native Windows vocabulary application with a classic Windows interface. Version **1.0** uses C# and WPF and opens in its own window.
 
