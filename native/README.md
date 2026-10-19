@@ -1,51 +1,47 @@
-# English Vocab DB — Native Windows 1.0
+# Vocabulary Database 1.1
 
-C# / WPF vocabulary application with a classic Windows interface. The main application has no browser, WebView, JavaScript or Node.js runtime dependency.
+Windows vocabulary cards with examples, dialogues, images, flashcards, Excel import/export and optional local AI.
 
-## Install
+## Installation
 
-Windows 10/11, x64, .NET Framework 4.8. Close the previous app, then run `English-Vocab-DB-Native-Setup-1.0.exe`. Choose the language used for translations and explanations. Interface labels stay in English.
+Windows 10/11 x64 and .NET Framework 4.8 are required. Close the application and run `Vocabulary-Database-Setup-1.1.exe`. Choose the translation and explanation language, then open the app.
 
-The application uses the existing local Qwen3.5 9B model through its private Ollama endpoint on `127.0.0.1:11437`. An API key is not required. If AI files are missing, use **Set up AI**; this can download about 8.1 GB and needs about 15 GB free space. AI is optional; manual cards and study features work independently. Generated text is a draft to review and save explicitly.
+Installing over English Vocab DB retains cards, attachments, language preferences and AI files. The installer reuses an existing installation directory and replaces its standard shortcuts with Vocabulary Database shortcuts. New installations use `%LOCALAPPDATA%\Programs\Vocabulary Database`.
 
-## Existing data
+For optional local AI, select **Set up AI**. The initial download can use about 8.1 GB and needs about 15 GB of free space. No API key or separate Ollama installation is required. Setup creates its directories and supports retrying after cancellation or a failed download. Review generated cards before saving.
 
-On first launch, cards, custom categories and images are transferred from the previous application's browser profile. Microsoft Edge is used in the background for this one-time storage export; it does not display or run the native interface. Previous cards and images remain in their original profile. A failed transfer leaves that profile intact and does not create an empty replacement database.
+## Data
 
-Native data: `%LOCALAPPDATA%\English Vocab DB\NativeData\vocabulary.json` and `images`. Each successful database update keeps the previous JSON revision. Uninstalling removes program files and shortcuts; it retains the vocabulary and local AI files.
+The data directory remains `%LOCALAPPDATA%\English Vocab DB` for upgrade compatibility:
 
-## Features
+- `NativeData\vocabulary.json` and `NativeData\images` contain cards and attachments.
+- `AI` contains the local runtime and models.
+- `BrowserData` contains the previous application's profile, if present.
 
-- Cards, sortable table, text/category/level/status/favorite filters.
-- Card details, editing, images, synonyms and adjacent antonyms.
-- Flashcards with selectable pools, shuffle and persisted learning status.
-- Local AI filling, only-empty mode, Stop and Undo; manual changes made while generating are preserved.
-- Translation/explanation language chosen during installation; study words can use any language.
-- Excel `.xlsx` / `.xls`, CSV and pasted-table import, column mapping, duplicate skipping, template and Excel export.
-- Classic card PNG export, including long text and colored A/B dialogue labels.
+The native interface uses WPF. Microsoft Edge is needed only for a one-time transfer from an older browser-based version. The old browser profile is retained. Database saves keep the previous JSON revision; uninstalling retains vocabulary and AI files.
 
 ## Build
 
-Run `powershell -NoProfile -ExecutionPolicy Bypass -File build.ps1` on Windows with .NET Framework 4.8. No packages are downloaded for the build. Assets and a BIFF8 test fixture are included. The app is written to `build\EnglishVocabDB.exe`; the installer is written to the sibling `outputs` folder.
+Run from a Windows PowerShell terminal:
 
-`EnglishVocabDB.csproj` can also be opened with Visual Studio and the .NET Framework 4.8 development tools. Use `build.ps1` to package the installer.
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File build.ps1
+```
 
-## Verify
+The build uses the installed .NET Framework compiler and included assets. It downloads no packages and treats compiler warnings as errors. Outputs are `build\VocabularyDatabase.exe` and `..\outputs\Vocabulary-Database-Setup-1.1.exe`.
 
-`build\EnglishVocabDB.exe --self-test <absolute-output-folder>` runs isolated data, import/export, AI draft/undo, attachment, save-failure and WPF rendering checks. It does not write to the user's installed database.
+`VocabularyDatabase.csproj` targets .NET Framework 4.8 and can be opened in Visual Studio. Product name, version and compatibility identifiers are in `AppInfo.cs`.
 
-`build\EnglishVocabDB.exe --ui-test <absolute-output-folder>` verifies picker interaction, all metadata choices, white category panels, row centering, paging scroll position, Back to top, caption buttons, maximized monitor work-area bounds and PNG separators with synthetic cards.
+## Verification
 
-Optional `--ai-test=<config.json>` and `--cancel-test=<config.json>` use a JSON object with `engine` (an isolated AI runtime/models folder) and `output`. `--migration-test=<config.json>` uses `profile`, `html`, `data` and `expectedImage`; it is for a synthetic test profile only. Its test-only sandbox flag is never used for production migration.
+Run against a built installer, with a new output directory:
 
-The installer supports `--extract-test=<folder>`, `--upgrade-test=<folder>` and `--render-test=<folder>` for isolated package, upgrade-preservation and installer-render checks.
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tests\run-release-tests.ps1 -Installer ..\outputs\Vocabulary-Database-Setup-1.1.exe -OutputDirectory C:\Temp\VocabularyDatabase-1.1-tests
+```
 
-The model can make linguistic mistakes; review generated cards. Full AI speed depends on available memory and GPU. This release is for Windows; it is not an iOS application.
+The suite checks card storage, import/export, attachments, AI draft/undo behavior, the native interface, clean AI setup, legacy upgrades, names, versions and shortcuts. It uses isolated folders and synthetic data; AI download tests use small in-memory HTTP fixtures.
 
-## Version and contact
+For AI setup checks alone, use `tests\run-ai-setup-tests.ps1 -Application <app-exe> -OutputDirectory <new-folder>`. The app also supports `--self-test <folder>`, `--ui-test <folder>` and `--screenshots <folder>`. Screenshot mode uses demonstration cards. The installer supports `--extract-test=<folder>`, `--upgrade-test=<folder>` and `--render-test=<folder>`.
 
-The main window shows a quiet footer: Version 1.0 and systemfolder.dev@gmail.com.
-
-## Repository screenshots
-
-Run `build\EnglishVocabDB.exe --screenshots <absolute-output-folder>` to render five showcase PNGs from synthetic demonstration cards. This mode uses an isolated temporary database and never reads personal vocabulary. The output folder also contains demo fixtures; publish only the five numbered PNG files.
+Contact: systemfolder.dev@gmail.com
