@@ -136,8 +136,6 @@ namespace Vocab
                 "app-icon.png",
                 IconName,
                 "app-icon-native-1.0.ico",
-                "ai-preferences.json",
-                "local-ai-seed.txt",
                 "uninstall.cmd"
             })
             {
@@ -167,16 +165,12 @@ namespace Vocab
                 File.WriteAllText(Path.Combine(folder, AppInfo.LegacyExecutableName), "previous app");
                 File.WriteAllText(Path.Combine(folder, AppInfo.LegacyExecutableName + ".config"), "previous config");
                 File.WriteAllText(Path.Combine(folder, "english-vocab-db.html"), "previous HTML");
-                File.WriteAllText(Path.Combine(folder, "local-ai-seed.txt"), "previous AI seed");
                 string data = Path.Combine(folder, "NativeData");
                 Directory.CreateDirectory(data);
                 File.WriteAllText(Path.Combine(data, "vocabulary.json"), "existing vocabulary");
-                var german = AIPreferences.Languages().First(l => l.Code == "de");
-                AIPreferences.Write(folder, german);
                 StopPrevious(folder);
                 Backup(folder);
                 Extract(folder);
-                AIPreferences.Write(folder, german);
                 RemoveLegacyExecutable(folder);
                 string backup = Directory.GetDirectories(Path.Combine(folder, "Backups")).Single();
                 check(File.ReadAllText(Path.Combine(backup, AppInfo.LegacyExecutableName)) == "previous app", "Previous app is backed up");
@@ -184,8 +178,6 @@ namespace Vocab
                 check(File.ReadAllText(Path.Combine(backup, "english-vocab-db.html")) == "previous HTML", "Previous HTML is backed up");
                 check(File.ReadAllText(Path.Combine(data, "vocabulary.json")) == "existing vocabulary", "Existing vocabulary is retained");
                 check(File.ReadAllText(Path.Combine(folder, "english-vocab-db.html")) == "previous HTML", "Browser storage origin is retained");
-                check(File.ReadAllText(Path.Combine(folder, "local-ai-seed.txt")) == "previous AI seed", "Existing AI seed is retained");
-                check(AIPreferences.Read(folder).Code == "de", "Explanation language is retained");
                 check(PackageMatches(Path.Combine(folder, AppInfo.ExecutableName)), "Renamed application matches the embedded package");
                 check(File.Exists(Path.Combine(folder, AppInfo.ExecutableName + ".config")), "Renamed application configuration is installed");
                 check(!File.Exists(Path.Combine(folder, AppInfo.LegacyExecutableName)), "Superseded executable is removed after backup");
@@ -193,7 +185,7 @@ namespace Vocab
                 check(AppInfo.InstallDirectory(programs) == Path.Combine(programs, AppInfo.Name), "New installations use the new product folder");
                 Directory.CreateDirectory(Path.Combine(programs, AppInfo.LegacyName));
                 check(AppInfo.InstallDirectory(programs) == Path.Combine(programs, AppInfo.LegacyName), "Upgrades reuse the existing installation folder");
-                check(AssemblyName.GetAssemblyName(Path.Combine(folder, AppInfo.ExecutableName)).Version.ToString() == AppInfo.AssemblyVersion, "Packaged application version is 1.1.0.0");
+                check(AssemblyName.GetAssemblyName(Path.Combine(folder, AppInfo.ExecutableName)).Version.ToString() == AppInfo.AssemblyVersion, "Packaged application version is 1.2.0.0");
                 File.WriteAllText(Path.Combine(root, "native-upgrade-results.json"), new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(new { passed = checks.Count, checks = checks }));
                 return 0;
             }
@@ -220,15 +212,6 @@ namespace Vocab
 
         static void StopPrevious(string folder)
         {
-            try
-            {
-                using (var signal = System.Threading.EventWaitHandle.OpenExisting("Local\\EnglishVocabDB.LocalAI.Stop"))
-                    signal.Set();
-            }
-            catch (System.Threading.WaitHandleCannotBeOpenedException)
-            {
-            }
-
             foreach (string name in new[]
             {
                 "VocabularyDatabase",
@@ -322,7 +305,6 @@ namespace Vocab
 
         sealed class InstallWindow : RetroWindow
         {
-            readonly ComboBox languages = new ComboBox();
             readonly TextBlock status = Retro.Text("Close the app before installing.");
             internal readonly SquareMeter meter = new SquareMeter
             {
@@ -335,7 +317,7 @@ namespace Vocab
             {
             }
 
-            public InstallWindow(string directory) : base(AppInfo.Name + " Setup", 520, 310)
+            public InstallWindow(string directory) : base(AppInfo.Name + " Setup", 520, 260)
             {
                 folder = directory;
                 var p = new StackPanel
@@ -343,16 +325,7 @@ namespace Vocab
                     Margin = new Thickness(18)
                 };
                 p.Children.Add(Retro.Row(Retro.Icon("book", 32), Retro.Text(AppInfo.Name, true, 16)));
-                p.Children.Add(new TextBlock { Text = "Translation & explanation language", Margin = new Thickness(0, 15, 0, 6) });
-                var old = AIPreferences.Read(folder);
-                foreach (var choice in AIPreferences.Languages())
-                {
-                    languages.Items.Add(choice);
-                    if (choice.Code == old.Code)
-                        languages.SelectedItem = choice;
-                }
-
-                p.Children.Add(languages);
+                p.Children.Add(Retro.Text("Version " + AppInfo.Version, false, 11));
                 status.Margin = new Thickness(0, 14, 0, 0);
                 p.Children.Add(status);
                 p.Children.Add(meter);
@@ -378,11 +351,10 @@ namespace Vocab
                     return;
                 }
 
-                if (running || languages.SelectedItem == null)
+                if (running)
                     return;
                 running = true;
-                install.IsEnabled = cancel.IsEnabled = languages.IsEnabled = false;
-                var selected = (LanguageChoice)languages.SelectedItem;
+                install.IsEnabled = cancel.IsEnabled = false;
                 meter.Set(0, true);
                 var report = new Progress<Tuple<string, int>>(v =>
                 {
@@ -399,11 +371,7 @@ namespace Vocab
                         Backup(folder);
                         tell("Installing…", 30);
                         Extract(folder);
-                        AIPreferences.Write(folder, selected);
                         RemoveLegacyExecutable(folder);
-                        string seed = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "LocalAI");
-                        if (Directory.Exists(Path.Combine(seed, "runtime")) && Directory.Exists(Path.Combine(seed, "models")))
-                            File.WriteAllText(Path.Combine(folder, "local-ai-seed.txt"), seed);
                         tell("Finishing…", 80);
                     });
                     Shortcuts(folder);
@@ -417,7 +385,6 @@ namespace Vocab
                 {
                     status.Text = "Installation failed.";
                     Retro.Message(error.Message);
-                    languages.IsEnabled = true;
                     meter.Set(0, false);
                 }
                 finally

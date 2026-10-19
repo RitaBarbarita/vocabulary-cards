@@ -6,8 +6,8 @@ namespace Vocab
     internal static class AppInfo
     {
         internal const string Name = "Vocabulary Database";
-        internal const string Version = "1.1";
-        internal const string AssemblyVersion = "1.1.0.0";
+        internal const string Version = "1.2";
+        internal const string AssemblyVersion = "1.2.0.0";
         internal const string ExecutableName = "VocabularyDatabase.exe";
         internal const string Contact = "systemfolder.dev@gmail.com";
         internal const string LegacyName = "English Vocab DB";

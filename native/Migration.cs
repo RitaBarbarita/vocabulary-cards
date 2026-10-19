@@ -79,7 +79,7 @@ namespace Vocab
                         string targetId = Convert.ToString(target["targetId"]);
                         var attached = await cdp.Call("Target.attachToTarget", new { targetId = targetId, flatten = true }, null, cancel);
                         string session = Convert.ToString(attached["sessionId"]);
-                        // Loading is stopped before the old app can make an AI request; only our export expression runs.
+                        // Keep scripts from the previous interface disabled; run only the storage export.
                         await cdp.Call("Page.enable", new { }, session, cancel);
                         await cdp.Call("Network.enable", new { }, session, cancel);
                         await cdp.Call("Network.setBlockedURLs", new { urls = new[] { "http://*", "https://*" } }, session, cancel);

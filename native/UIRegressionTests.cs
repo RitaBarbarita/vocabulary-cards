@@ -74,8 +74,7 @@ namespace Vocab
             try
             {
                 var store = new Store(Path.Combine(output, "ui-data-" + Guid.NewGuid().ToString("N")));
-                var language = AIPreferences.Languages().First(l => l.Code == "en");
-                var editor = new EditorWindow(store, language, null);
+                var editor = new EditorWindow(store, null);
                 NativeTests.ShowOffscreen(editor);
                 foreach (var pair in editor.Choices)
                 {
@@ -103,7 +102,7 @@ namespace Vocab
                 editor.Save();
                 var saved = new Store(store.Root).Data.cards.Single();
                 Check(saved.level == "C1" && saved.status == "known" && saved.register == "Slang", "Selected metadata persists after Save");
-                var edit = new EditorWindow(store, language, store.Data.cards[0]);
+                var edit = new EditorWindow(store, store.Data.cards[0]);
                 NativeTests.ShowOffscreen(edit);
                 foreach (var pair in edit.Choices)
                 {
@@ -134,7 +133,7 @@ namespace Vocab
                 Check(categoryPanels.Length == 2 && categoryPanels.All(p => ((Border)((Border)p.Parent).Parent).Background == Brushes.White), "Section and topic checkboxes have white inset panels");
                 for (int i = 0; i < 120; i++)
                     store.Data.cards.Add(new Card { english = "Card " + i, russian = "Translation", example = "An example sentence.", level = "B1" });
-                var main = new MainWindow(store, language);
+                var main = new MainWindow(store);
                 NativeTests.ShowOffscreen(main);
                 Pump();
                 var scroll = Find<ScrollViewer>(main).Single(s => s.Name == "CardScroll");

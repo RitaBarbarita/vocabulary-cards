@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -13,7 +12,6 @@ namespace Vocab
     public sealed class EditorWindow : RetroWindow
     {
         readonly Store store;
-        readonly LanguageChoice language;
         readonly Card original;
         public Card Draft;
         public readonly Dictionary<string, TextBox> TextFields = new Dictionary<string, TextBox>();
@@ -24,40 +22,12 @@ namespace Vocab
         readonly CheckBox fav = new CheckBox
         {
             Content = "Favorite"
-        }, empty = new CheckBox
-        {
-            Content = "Only empty fields",
-            IsChecked = true
         };
-        readonly TextBox request = new TextBox
-        {
-            Margin = new Thickness(0, 4, 0, 6),
-            MaxLength = 2000
-        };
-        readonly TextBlock aiStatus = Retro.Text("");
-        readonly Button fill, stop, undo, save;
-        CancellationTokenSource job;
-        Dictionary<string, object> undoBefore, undoAfter;
-        List<string> undoKeys;
-        readonly System.Windows.Threading.DispatcherTimer timer = new System.Windows.Threading.DispatcherTimer
-        {
-            Interval = TimeSpan.FromSeconds(1)
-        };
-        DateTime started;
         public bool Saved { get; private set; }
 
-        public bool Filling
-        {
-            get
-            {
-                return job != null;
-            }
-        }
-
-        public EditorWindow(Store data, LanguageChoice chosen, Card card) : base(card == null ? "Add Card" : "Edit Card", 580, Math.Min(780, SystemParameters.WorkArea.Height - 30), true)
+        public EditorWindow(Store data, Card card) : base(card == null ? "Add Card" : "Edit Card", 580, Math.Min(780, SystemParameters.WorkArea.Height - 30), true)
         {
             store = data;
-            language = chosen;
             original = card;
             Draft = card == null ? new Card() : card.Copy();
             Draft.Normalize();
@@ -68,7 +38,7 @@ namespace Vocab
                 HorizontalAlignment = HorizontalAlignment.Right,
                 Margin = new Thickness(8)
             };
-            save = Retro.Button("Save", "save", () => Save());
+            var save = Retro.Button("Save", "save", () => Save());
             footer.Children.Add(save);
             footer.Children.Add(Retro.Button("Cancel", null, () => Close()));
             DockPanel.SetDock(footer, Dock.Bottom);
@@ -77,34 +47,6 @@ namespace Vocab
             {
                 Margin = new Thickness(10)
             };
-            var ai = new StackPanel
-            {
-                Margin = new Thickness(8)
-            };
-            ai.Children.Add(Retro.Row(Retro.Icon("ai"), Retro.Text("AI assistant · optional instructions")));
-            ai.Children.Add(request);
-            fill = Retro.Button("Fill", "ai", () =>
-            {
-                Generate();
-            });
-            stop = Retro.Button("Stop", null, () => Cancel());
-            stop.Visibility = Visibility.Collapsed;
-            undo = Retro.Button("Undo fill", null, () => Undo());
-            undo.Visibility = Visibility.Collapsed;
-            ai.Children.Add(Retro.Row(fill, stop, undo, empty));
-            aiStatus.Text = "Translation & explanation: " + chosen.Name + ".";
-            aiStatus.FontSize = 11;
-            aiStatus.Margin = new Thickness(0, 6, 0, 0);
-            ai.Children.Add(aiStatus);
-            var setup = Retro.Button("Set up AI", null, () => new PrepareWindow().ShowDialog());
-            if (!LocalApp.RuntimeReady || !LocalApp.ModelOnDisk)
-            {
-                setup.HorizontalAlignment = HorizontalAlignment.Left;
-                setup.Margin = new Thickness(0, 5, 0, 0);
-                ai.Children.Add(setup);
-            }
-
-            body.Children.Add(Retro.Frame(ai, true, new SolidColorBrush(Color.FromRgb(232, 232, 237))));
             body.Children.Add(Retro.Heading("Main"));
             AddText(body, "english", "Word or Phrase *", false);
             AddText(body, "russian", "Translation", false);
@@ -174,14 +116,11 @@ namespace Vocab
             RenderTags();
             dock.Children.Add(new ScrollViewer { Content = body, VerticalScrollBarVisibility = ScrollBarVisibility.Auto });
             Body = dock;
-            timer.Tick += (s, e) => aiStatus.Text = "Filling card… " + (int)(DateTime.UtcNow - started).TotalSeconds + " s" + ((DateTime.UtcNow - started).TotalSeconds > 20 ? ". The first request may take longer." : "");
-            Closing += (s, e) => Cancel();
             PreviewKeyDown += (s, e) =>
             {
                 if (e.Key == System.Windows.Input.Key.S && System.Windows.Input.Keyboard.Modifiers == System.Windows.Input.ModifierKeys.Control)
                 {
-                    if (job == null)
-                        Save();
+                    Save();
                     e.Handled = true;
                 }
             };
@@ -291,29 +230,6 @@ namespace Vocab
             Draft.sections = sections.Where(p => p.Value.IsChecked == true).Select(p => p.Key).ToList();
             Draft.topics = topics.Where(p => p.Value.IsChecked == true).Select(p => p.Key).ToList();
             return Draft;
-        }
-
-        public void ApplyField(string key, object value)
-        {
-            if (TextFields.ContainsKey(key))
-                TextFields[key].Text = Convert.ToString(value);
-            else if (Choices.ContainsKey(key))
-                Choices[key].SelectedValue = Convert.ToString(value);
-            else if (key == "sections")
-            {
-                Draft.sections = Json.Read<List<string>>(Json.Write(value));
-                RenderTags();
-            }
-            else if (key == "topics")
-            {
-                Draft.topics = Json.Read<List<string>>(Json.Write(value));
-                RenderTags();
-            }
-            else if (key == "dialogs")
-            {
-                Draft.dialogs = Json.Read<List<Dialogue>>(Json.Write(value));
-                RenderDialogs();
-            }
         }
 
         void RenderDialogs()
@@ -500,103 +416,6 @@ namespace Vocab
 
             Saved = true;
             Close();
-        }
-
-        void Busy(bool value)
-        {
-            fill.IsEnabled = !value;
-            save.IsEnabled = !value;
-            stop.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
-            undo.IsEnabled = !value;
-        }
-
-        public void Cancel()
-        {
-            if (job == null)
-                return;
-            job.Cancel();
-            job = null;
-            timer.Stop();
-            Busy(false);
-            aiStatus.Text = "Fill cancelled.";
-        }
-
-        public void Undo()
-        {
-            if (undoKeys == null || job != null)
-                return;
-            var now = AI.Fields(Capture());
-            foreach (var key in undoKeys)
-                if (AI.Same(now[key], undoAfter[key]))
-                    ApplyField(key, undoBefore[key]);
-            undoKeys = null;
-            undo.Visibility = Visibility.Collapsed;
-            aiStatus.Text = "Fill undone. Later manual edits were kept.";
-        }
-
-        public bool ApplyResult(Dictionary<string, object> result, Dictionary<string, object> before, bool onlyEmpty)
-        {
-            var now = AI.Fields(Capture());
-            if (!AI.Same(now["english"], before["english"]))
-                throw new InvalidOperationException("The word changed while filling. Click Fill again.");
-            var keys = result.Keys.Where(k => AI.Has(result[k]) && (!onlyEmpty || !AI.Has(before[k])) && AI.Same(now[k], before[k]) && !AI.Same(now[k], result[k])).ToList();
-            if (keys.Count == 0)
-                return false;
-            undoBefore = now;
-            undoAfter = result;
-            undoKeys = keys;
-            foreach (var key in keys)
-                ApplyField(key, result[key]);
-            undo.Visibility = Visibility.Visible;
-            return true;
-        }
-
-        public async void Generate()
-        {
-            if (job != null)
-                return;
-            var before = AI.Fields(Capture());
-            var current = Draft.Copy();
-            bool onlyEmpty = empty.IsChecked == true;
-            var own = new CancellationTokenSource(TimeSpan.FromMinutes(3));
-            job = own;
-            Busy(true);
-            started = DateTime.UtcNow;
-            timer.Start();
-            aiStatus.Text = "Filling card…";
-            try
-            {
-                var result = await AI.Generate(current, request.Text, store, language, own.Token);
-                if (job != own)
-                    return;
-                if (!ApplyResult(result, before, onlyEmpty))
-                {
-                    aiStatus.Text = "Fields are already filled. Uncheck Only empty fields to replace them.";
-                    return;
-                }
-
-                aiStatus.Text = "Done in " + (int)(DateTime.UtcNow - started).TotalSeconds + " s. Review the card and click Save.";
-            }
-            catch (OperationCanceledException)
-            {
-                if (job == own)
-                    aiStatus.Text = "The request was stopped or timed out. Please try again.";
-            }
-            catch (Exception error)
-            {
-                if (job == own)
-                    aiStatus.Text = error.Message;
-            }
-            finally
-            {
-                own.Dispose();
-                if (job == own)
-                {
-                    job = null;
-                    timer.Stop();
-                    Busy(false);
-                }
-            }
         }
     }
 

@@ -90,130 +90,32 @@ namespace Vocab
                 var exported = Tables.ReadXlsx(workbook);
                 Check(exported.Count == 3 && exported[0][3] == "Antonyms / Opposite" && exported[1][0] == "calm", "Excel export and import round-trip with adjacent antonyms");
                 Check(exported[2][4] == c.example, "Excel round-trip preserves multiline examples");
-                var lang = AIPreferences.Languages().First(l => l.Code == "de");
-                var request = Json.Read<Dictionary<string, object>>(Json.Write(AI.Request(c, "B1", store, lang)));
-                var format = (Dictionary<string, object>)request["format"];
-                var props = (Dictionary<string, object>)format["properties"];
-                Check(props.ContainsKey("word") && props.ContainsKey("translation") && props.ContainsKey("antonyms") && !props.ContainsKey("russian"), "AI uses language-neutral schema keys with antonyms");
-                Check(Json.Write(request).Contains("German (de)"), "Installer language reaches the AI prompt");
-                var result = AI.Parse(Json.Write(new { word = c.english, translation = "mit jemandem gut auskommen", antonyms = "clash with", example = new[] { "I get along with Tom.", "We get along with her.", "They get along with us." }, level = "B1", register = "Neutral", topics = new[] { "Relationships" }, dialogs = new[] { new { lines = new[] { new { speaker = "A", text = "Hello" }, new { speaker = "B", text = "Hi" } } } } }), c.english, store);
-                Check(Convert.ToString(result["example"]).Split('\n').Length == 3 && result.ContainsKey("antonyms"), "AI validates examples, antonyms and dialogues");
-                bool rejected = false;
-                try
-                {
-                    AI.Parse("{\"word\":\"wrong\",\"translation\":\"x\"}", c.english, store);
-                }
-                catch
-                {
-                    rejected = true;
-                }
-
-                Check(rejected, "AI rejects a different word");
-                rejected = false;
-                try
-                {
-                    AI.Parse("{\"antonyms\":{\"bad\":true}}", "", store);
-                }
-                catch
-                {
-                    rejected = true;
-                }
-
-                Check(rejected, "AI rejects malformed antonyms");
-                Check(Convert.ToString(AI.Parse("{\"word\":\"你好\",\"translation\":\"hello\"}", "你好", store)["english"]) == "你好", "Chinese study words are accepted");
-                var editor = new EditorWindow(store, lang, c);
+                var editor = new EditorWindow(store, c);
                 ShowOffscreen(editor);
                 editor.TextFields["antonyms"].Text = "manual opposite";
                 editor.TextFields["grammar"].Text = "Manual grammar";
                 editor.Capture();
                 Check(editor.Draft.antonyms == "manual opposite" && editor.Draft.id == c.id, "Native editor captures fields while preserving card identity");
-                editor.ApplyField("topics", new List<string> { "My Topic" });
-                Check(editor.Capture().topics.Contains("My Topic"), "AI category application uses native checkboxes");
+                Check(editor.Draft.topics.SequenceEqual(c.topics) && editor.Draft.sections.SequenceEqual(c.sections) && editor.Draft.dialogs.Single().lines.Count == 2, "Editing retains categories and dialogues");
                 editor.Save();
                 Check(new Store(store.Root).Data.cards.First(x => x.id == c.id).antonyms == "manual opposite", "Native editor Save persists edits");
-                var fresh = new EditorWindow(store, lang, null);
+                var fresh = new EditorWindow(store, null);
                 ShowOffscreen(fresh);
                 Check(fresh.TextFields["antonyms"].Text == "" && fresh.Draft.dialogs.Count == 0, "New native cards do not inherit earlier antonyms or dialogues");
                 Screenshot(fresh, Path.Combine(root, "Native-editor.png"));
                 fresh.Close();
-                var fillEditor = new EditorWindow(store, lang, null);
-                ShowOffscreen(fillEditor);
-                fillEditor.TextFields["english"].Text = "native fill";
-                fillEditor.TextFields["antonyms"].Text = "Manual opposite";
-                var before = AI.Fields(fillEditor.Capture().Copy());
-                var generated = new Dictionary<string, object>
-                {
-                    {
-                        "english",
-                        "native fill"
-                    },
-                    {
-                        "russian",
-                        "Generated translation"
-                    },
-                    {
-                        "explanation",
-                        "Generated explanation"
-                    },
-                    {
-                        "antonyms",
-                        "AI opposite"
-                    },
-                    {
-                        "dialogs",
-                        new List<Dialogue>
-                        {
-                            new Dialogue
-                            {
-                                lines = new List<Line>
-                                {
-                                    new Line
-                                    {
-                                        speaker = "A",
-                                        text = "Hello"
-                                    },
-                                    new Line
-                                    {
-                                        speaker = "B",
-                                        text = "Hi"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                };
-                fillEditor.TextFields["explanation"].Text = "Typed during generation";
+                var unicodeEditor = new EditorWindow(store, null);
+                ShowOffscreen(unicodeEditor);
+                unicodeEditor.TextFields["english"].Text = "你好";
+                unicodeEditor.TextFields["russian"].Text = "привет";
+                unicodeEditor.Save();
+                Check(new Store(store.Root).Data.cards.Any(card => card.english == "你好" && card.russian == "привет"), "Manual card entry preserves Unicode study words and translations");
                 int savedCount = store.Data.cards.Count;
-                Check(fillEditor.ApplyResult(generated, before, true), "AI applies eligible empty fields");
-                Check(fillEditor.TextFields["antonyms"].Text == "Manual opposite" && fillEditor.TextFields["explanation"].Text == "Typed during generation", "Only-empty filling preserves manual fields and edits made during generation");
-                Check(store.Data.cards.Count == savedCount && new Store(store.Root).Data.cards.Count == savedCount, "AI filling does not save a card automatically");
-                fillEditor.TextFields["russian"].Text = "Later manual translation";
-                fillEditor.Undo();
-                Check(fillEditor.TextFields["russian"].Text == "Later manual translation" && fillEditor.Draft.dialogs.Count == 0 && fillEditor.TextFields["explanation"].Text == "Typed during generation", "Undo restores generated fields while keeping later manual edits");
-                before = AI.Fields(fillEditor.Capture().Copy());
-                fillEditor.ApplyResult(generated, before, false);
-                Check(fillEditor.TextFields["antonyms"].Text == "AI opposite", "Replacement mode can fill existing fields");
-                fillEditor.Undo();
-                Check(fillEditor.TextFields["antonyms"].Text == "Manual opposite", "Undo restores an overwritten manual antonym");
-                before = AI.Fields(fillEditor.Capture().Copy());
-                fillEditor.TextFields["english"].Text = "Changed word";
-                bool wordChanged = false;
-                try
-                {
-                    fillEditor.ApplyResult(generated, before, false);
-                }
-                catch (InvalidOperationException)
-                {
-                    wordChanged = true;
-                }
-
-                Check(wordChanged, "A response for a word changed during generation is rejected");
-                fillEditor.Close();
                 var imageFile = Path.Combine(run, "image.png");
                 using (var input = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("Icons.book.png"))
                 using (var output = File.Create(imageFile))
                     input.CopyTo(output);
-                var imageEditor = new EditorWindow(store, lang, null);
+                var imageEditor = new EditorWindow(store, null);
                 ShowOffscreen(imageEditor);
                 imageEditor.TextFields["english"].Text = "Image card";
                 imageEditor.QueueImages(new[] { imageFile });
@@ -221,13 +123,13 @@ namespace Vocab
                 Check(!File.Exists(store.ImagePath(imageId)), "New attachment files are deferred until Save");
                 imageEditor.Save();
                 Check(File.ReadAllBytes(store.ImagePath(imageId)).SequenceEqual(File.ReadAllBytes(imageFile)) && new Store(store.Root).Data.cards[0].attachments.Count == 1, "Attachment Save preserves image bytes and metadata");
-                var imageCancelled = new EditorWindow(store, lang, null);
+                var imageCancelled = new EditorWindow(store, null);
                 ShowOffscreen(imageCancelled);
                 imageCancelled.QueueImages(new[] { imageFile });
                 string cancelImage = imageCancelled.Draft.attachments.Single().id;
                 imageCancelled.Close();
                 Check(!File.Exists(store.ImagePath(cancelImage)) && store.Data.cards.Count == savedCount + 1, "Cancel discards a new card and its pending attachments");
-                var rollback = new EditorWindow(store, lang, store.Data.cards[0]);
+                var rollback = new EditorWindow(store, store.Data.cards[0]);
                 ShowOffscreen(rollback);
                 rollback.TextFields["english"].Text = "Should not save";
                 string savedWord = store.Data.cards[0].english;
@@ -246,7 +148,7 @@ namespace Vocab
 
                 Check(failed && !rollback.Saved && store.Data.cards[0].english == savedWord && new Store(store.Root).Data.cards[0].english == savedWord, "A failed save preserves the previous database in memory and on disk");
                 rollback.Close();
-                var main = new MainWindow(store, lang);
+                var main = new MainWindow(store);
                 ShowOffscreen(main);
                 Screenshot(main, Path.Combine(root, "Native-interface.png"));
                 main.Switch("table");
@@ -292,9 +194,6 @@ namespace Vocab
                 var biff = Tables.ReadFile(xls);
                 Check(biff.Count == 2 && biff[1][0] == "你好" && biff[1][1] == "привет" && biff[1][3] == "再见", "Legacy Excel .xls imports Unicode cells");
                 Check(biff[1][2] == String.Concat(Enumerable.Repeat("長い説明 ", 2000)) && biff[1][4] == "12.5", "Legacy Excel handles SST continuations and numeric cells");
-                var prefs = Path.Combine(run, "preferences");
-                AIPreferences.Write(prefs, lang);
-                Check(AIPreferences.Read(prefs).Code == "de", "Explanation language persists independently of browser storage");
                 File.WriteAllText(Path.Combine(root, "native-test-results.json"), Json.Write(new { passed = checks.Count, checks = checks }));
                 File.WriteAllText(Path.Combine(root, "last-run.txt"), run);
                 return 0;
@@ -334,90 +233,6 @@ namespace Vocab
             catch (Exception error)
             {
                 File.WriteAllText(Path.Combine(config["data"], "migration-error.txt"), error.ToString());
-                return 1;
-            }
-        }
-
-        public static int AITest(string configFile)
-        {
-            var config = Json.Read<Dictionary<string, string>>(File.ReadAllText(configFile));
-            Directory.CreateDirectory(config["output"]);
-            LocalApp.Root = config["engine"];
-            try
-            {
-                var store = new Store(Path.Combine(config["output"], "data"));
-                var results = new List<object>();
-                foreach (var test in new[]
-                {
-                    new[]
-                    {
-                        "bonjour",
-                        "de"
-                    },
-                    new[]
-                    {
-                        "你好",
-                        "en"
-                    },
-                    new[]
-                    {
-                        "thank you",
-                        "zh-Hans"
-                    }
-                })
-                {
-                    var lang = AIPreferences.Languages().First(l => l.Code == test[1]);
-                    var start = DateTime.UtcNow;
-                    var result = System.Threading.Tasks.Task.Run(async () => await AI.Generate(new Card { english = test[0] }, "", store, lang, CancellationToken.None)).GetAwaiter().GetResult();
-                    results.Add(new { word = test[0], language = lang.Name, seconds = (int)(DateTime.UtcNow - start).TotalSeconds, fields = result });
-                    File.WriteAllText(Path.Combine(config["output"], "native-live-ai-results.json"), Json.Write(results));
-                }
-
-                return 0;
-            }
-            catch (Exception error)
-            {
-                File.WriteAllText(Path.Combine(config["output"], "native-ai-error.txt"), error.ToString());
-                return 1;
-            }
-        }
-
-        public static int CancelTest(string configFile)
-        {
-            var config = Json.Read<Dictionary<string, string>>(File.ReadAllText(configFile));
-            Directory.CreateDirectory(config["output"]);
-            LocalApp.Root = config["engine"];
-            try
-            {
-                var store = new Store(Path.Combine(config["output"], "cancel-data"));
-                var editor = new EditorWindow(store, AIPreferences.Languages().First(l => l.Code == "en"), null);
-                ShowOffscreen(editor);
-                editor.TextFields["english"].Text = "cancellation";
-                var before = AI.Fields(editor.Capture().Copy());
-                editor.Generate();
-                Check(editor.Filling, "Native AI filling enters a cancellable state");
-                editor.Cancel();
-                Check(!editor.Filling, "Stop releases the native editor immediately");
-                var frame = new System.Windows.Threading.DispatcherFrame();
-                var timer = new System.Windows.Threading.DispatcherTimer
-                {
-                    Interval = TimeSpan.FromMilliseconds(750)
-                };
-                timer.Tick += (s, e) =>
-                {
-                    timer.Stop();
-                    frame.Continue = false;
-                };
-                timer.Start();
-                System.Windows.Threading.Dispatcher.PushFrame(frame);
-                Check(AI.Same(before, AI.Fields(editor.Capture())) && store.Data.cards.Count == 0 && !File.Exists(store.FileName), "A cancelled request leaves the draft and saved database unchanged");
-                editor.Close();
-                File.WriteAllText(Path.Combine(config["output"], "native-cancel-results.json"), Json.Write(new { passed = checks.Count, checks = checks }));
-                return 0;
-            }
-            catch (Exception error)
-            {
-                File.WriteAllText(Path.Combine(config["output"], "native-cancel-error.txt"), error.ToString());
                 return 1;
             }
         }

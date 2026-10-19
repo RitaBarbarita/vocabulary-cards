@@ -50,7 +50,6 @@ internal static class BrandingTests
         try
         {
             var app = Assembly.LoadFrom(Path.GetFullPath(args[0]));
-            app.GetType("LocalApp").GetField("Root", Flags).SetValue(null, Path.Combine(output, "AI"));
             var setup = Assembly.LoadFrom(Path.GetFullPath(args[1]));
             foreach (var assembly in new[]
             {
@@ -59,7 +58,7 @@ internal static class BrandingTests
             })
             {
                 var info = FileVersionInfo.GetVersionInfo(assembly.Location);
-                Check(info.FileVersion == "1.1.0.0" && info.ProductVersion == "1.1.0.0", Path.GetFileName(assembly.Location) + " reports version 1.1.0.0");
+                Check(info.FileVersion == "1.2.0.0" && info.ProductVersion == "1.2.0.0", Path.GetFileName(assembly.Location) + " reports version 1.2.0.0");
                 Check(info.ProductName == ProductName && info.FileDescription.StartsWith(ProductName), Path.GetFileName(assembly.Location) + " uses the new product name");
             }
 
@@ -70,24 +69,25 @@ internal static class BrandingTests
             };
             app.GetType("Vocab.Retro").GetMethod("Init").Invoke(null, null);
             var store = Activator.CreateInstance(app.GetType("Vocab.Store"), Path.Combine(output, "data"));
-            var preferences = app.GetType("AIPreferences");
-            var language = preferences.GetMethod("Read", Flags).Invoke(null, new object[] { output });
-            var main = (Window)Activator.CreateInstance(app.GetType("Vocab.MainWindow"), store, language);
+            var main = (Window)Activator.CreateInstance(app.GetType("Vocab.MainWindow"), store);
             Show(main);
             Check(main.Title == ProductName, "The main window displays Vocabulary Database");
-            Check(Find<TextBlock>(main).Single(t => t.Name == "AppCredit").Text.StartsWith("Version 1.1  "), "The application footer displays version 1.1");
+            Check(Find<TextBlock>(main).Single(t => t.Name == "AppCredit").Text.StartsWith("Version 1.2  "), "The application footer displays version 1.2");
             main.Close();
-            var prepare = (Window)Activator.CreateInstance(app.GetType("Vocab.PrepareWindow"));
-            Show(prepare);
-            Check(prepare.Title == ProductName + " Setup", "AI setup uses the new product name");
-            prepare.Close();
+            var editor = (Window)Activator.CreateInstance(app.GetType("Vocab.EditorWindow"), new object[] { store, null });
+            Show(editor);
+            var fields = (Dictionary<string, TextBox>)editor.GetType().GetField("TextFields").GetValue(editor);
+            var entryScroll = Find<ScrollViewer>(editor).First(view => view.Content is StackPanel);
+            Check(fields.Count == 7 && fields["english"].TranslatePoint(new Point(), entryScroll).Y < 90, "The editor opens directly at the word and translation fields");
+            editor.Close();
             var installer = (Window)Activator.CreateInstance(setup.GetType("Vocab.Install+InstallWindow"), Flags, null, new object[] { Path.Combine(output, "install") }, null);
             Show(installer);
             Check(installer.Title == ProductName + " Setup" && Find<TextBlock>(installer).Any(t => t.Text == ProductName), "Installer title and heading use the new product name");
+            Check(!Find<ComboBox>(installer).Any(), "Installation does not require choosing content settings");
             installer.Close();
             var appInfo = app.GetType("Vocab.AppInfo");
             string dataDirectory = (string)appInfo.GetProperty("DataDirectory", Flags).GetValue(null, null);
-            Check(dataDirectory == Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "English Vocab DB"), "Existing vocabulary and model paths remain compatible");
+            Check(dataDirectory == Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "English Vocab DB"), "Existing vocabulary paths remain compatible");
             string shortcuts = Path.Combine(output, "shortcuts");
             Directory.CreateDirectory(shortcuts);
             string program = Path.Combine(output, "install");

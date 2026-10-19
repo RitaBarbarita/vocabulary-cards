@@ -18,8 +18,6 @@ namespace Vocab
         [STAThread]
         public static int Main(string[] args)
         {
-            System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
-            LocalApp.Root = Path.Combine(AppInfo.DataDirectory, "AI");
             DataRoot = Path.Combine(AppInfo.DataDirectory, "NativeData");
             foreach (var a in args)
                 if (a.StartsWith("--data-root="))
@@ -31,10 +29,6 @@ namespace Vocab
             Retro.Init();
             if (args.Length > 0 && args[0].StartsWith("--migration-test="))
                 return NativeTests.MigrationTest(args[0].Substring(17));
-            if (args.Length > 0 && args[0].StartsWith("--ai-test="))
-                return NativeTests.AITest(args[0].Substring(10));
-            if (args.Length > 0 && args[0].StartsWith("--cancel-test="))
-                return NativeTests.CancelTest(args[0].Substring(14));
             if (args.Length > 0 && args[0] == "--self-test")
                 return NativeTests.Run(args.Length > 1 ? args[1] : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "test-output"));
             if (args.Length > 1 && args[0] == "--ui-test")
@@ -68,7 +62,7 @@ namespace Vocab
                         }
                     }
 
-                    var main = new MainWindow(store, AIPreferences.Read(AppDomain.CurrentDomain.BaseDirectory));
+                    var main = new MainWindow(store);
                     app.MainWindow = main;
                     app.ShutdownMode = ShutdownMode.OnMainWindowClose;
                     app.Run(main);
@@ -83,87 +77,6 @@ namespace Vocab
                 {
                     mutex.ReleaseMutex();
                 }
-            }
-        }
-    }
-
-    public sealed class PrepareWindow : RetroWindow
-    {
-        readonly SquareMeter progress = new SquareMeter
-        {
-            Margin = new Thickness(0, 14, 0, 14)
-        };
-        readonly TextBlock message = Retro.Text("Set up local AI");
-        readonly Button start, later;
-        CancellationTokenSource cancellation;
-        bool running;
-        public PrepareWindow() : base(AppInfo.Name + " Setup", 500, 245)
-        {
-            var p = new StackPanel
-            {
-                Margin = new Thickness(18)
-            };
-            p.Children.Add(Retro.Row(Retro.Icon("ai", 32), Retro.Text("Local AI", true, 14)));
-            message.Margin = new Thickness(0, 12, 0, 0);
-            p.Children.Add(message);
-            p.Children.Add(Retro.Text(LocalApp.RuntimeReady && LocalApp.ModelOnDisk ? "Ready." : "Download: up to 8.1 GB · Free space: 15 GB", false, 11));
-            p.Children.Add(progress);
-            start = Retro.Button("Set up AI", null, () => Run());
-            later = Retro.Button("Later", null, () =>
-            {
-                if (running)
-                    cancellation.Cancel();
-                else
-                    Close();
-            });
-            var row = Retro.Row(start, later);
-            row.HorizontalAlignment = HorizontalAlignment.Right;
-            p.Children.Add(row);
-            Body = p;
-            Closing += (s, e) =>
-            {
-                if (running)
-                {
-                    cancellation.Cancel();
-                    e.Cancel = true;
-                }
-            };
-        }
-
-        async void Run()
-        {
-            if (running)
-                return;
-            running = true;
-            start.IsEnabled = false;
-            ((StackPanel)later.Content).Children.Clear();
-            ((StackPanel)later.Content).Children.Add(Retro.Text("Stop"));
-            cancellation = new CancellationTokenSource();
-            progress.Set(0, true);
-            var report = new Progress<Tuple<string, int>>(v =>
-            {
-                message.Text = v.Item1;
-                progress.Set(v.Item2, true);
-            });
-            try
-            {
-                await LocalApp.Prepare((s, i) => ((IProgress<Tuple<string, int>>)report).Report(Tuple.Create(s, i)), cancellation.Token);
-                running = false;
-                Close();
-            }
-            catch (Exception error)
-            {
-                message.Text = cancellation.IsCancellationRequested ? "Setup paused." : "Setup failed.";
-                if (!cancellation.IsCancellationRequested)
-                    Retro.Message(error.Message);
-            }
-            finally
-            {
-                running = false;
-                start.IsEnabled = true;
-                progress.Set(progress.Value, false);
-                ((StackPanel)later.Content).Children.Clear();
-                ((StackPanel)later.Content).Children.Add(Retro.Text("Later"));
             }
         }
     }

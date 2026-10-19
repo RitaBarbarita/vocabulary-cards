@@ -1,9 +1,9 @@
 {
-  "version": "1.1",
-  "passed": 132.0,
+  "version": "1.2",
+  "passed": 98.0,
   "tests": [
     {
-      "passed": 38,
+      "passed": 25,
       "checks": [
         "Cards, antonyms, metadata and dialogues survive disk reload",
         "Custom categories survive disk reload",
@@ -15,23 +15,11 @@
         "CSV parsing preserves quoted delimiters and multiline cells",
         "Excel export and import round-trip with adjacent antonyms",
         "Excel round-trip preserves multiline examples",
-        "AI uses language-neutral schema keys with antonyms",
-        "Installer language reaches the AI prompt",
-        "AI validates examples, antonyms and dialogues",
-        "AI rejects a different word",
-        "AI rejects malformed antonyms",
-        "Chinese study words are accepted",
         "Native editor captures fields while preserving card identity",
-        "AI category application uses native checkboxes",
+        "Editing retains categories and dialogues",
         "Native editor Save persists edits",
         "New native cards do not inherit earlier antonyms or dialogues",
-        "AI applies eligible empty fields",
-        "Only-empty filling preserves manual fields and edits made during generation",
-        "AI filling does not save a card automatically",
-        "Undo restores generated fields while keeping later manual edits",
-        "Replacement mode can fill existing fields",
-        "Undo restores an overwritten manual antonym",
-        "A response for a word changed during generation is rejected",
+        "Manual card entry preserves Unicode study words and translations",
         "New attachment files are deferred until Save",
         "Attachment Save preserves image bytes and metadata",
         "Cancel discards a new card and its pending attachments",
@@ -41,8 +29,7 @@
         "Native PNG export preserves very long cards at the original 1200-pixel width",
         "An invalid database is reported without replacing its contents",
         "Legacy Excel .xls imports Unicode cells",
-        "Legacy Excel handles SST continuations and numeric cells",
-        "Explanation language persists independently of browser storage"
+        "Legacy Excel handles SST continuations and numeric cells"
       ]
     },
     {
@@ -99,75 +86,43 @@
       ]
     },
     {
-      "passed": 13,
+      "passed": 11,
       "checks": [
         "Previous app is backed up",
         "Previous configuration is backed up",
         "Previous HTML is backed up",
         "Existing vocabulary is retained",
         "Browser storage origin is retained",
-        "Existing AI seed is retained",
-        "Explanation language is retained",
         "Renamed application matches the embedded package",
         "Renamed application configuration is installed",
         "Superseded executable is removed after backup",
         "New installations use the new product folder",
         "Upgrades reuse the existing installation folder",
-        "Packaged application version is 1.1.0.0"
+        "Packaged application version is 1.2.0.0"
       ]
     },
     {
-      "passed": 20,
+      "passed": 14,
       "checks": [
-        "Unseeded Prepare creates the absent AI directory before attempting a download",
-        "Fresh-install test starts without the profile or AI parent directory",
-        "Fresh installation downloads and installs into a Unicode path with spaces",
-        "Nested engine libraries are extracted",
-        "Successful setup removes the archive and temporary files",
-        "An installed runtime is reused without another download",
-        "Cancelling a download removes its partial archive and does not mark AI ready",
-        "Setup succeeds when retried after cancelling a download",
-        "Cancelling extraction leaves no partially installed engine",
-        "Retry after cancelled extraction reuses the verified archive",
-        "A corrupt download fails verification without publishing engine files",
-        "Setup succeeds after a corrupt download without manual cleanup",
-        "A server error leaves setup retryable",
-        "Setup succeeds after a server error",
-        "Old partial downloads and incomplete extraction recover automatically",
-        "Repair retains existing models and vocabulary",
-        "A previously verified archive installs without network access",
-        "Archive traversal is rejected before installing the engine",
-        "An archive without the engine executable cannot be marked ready",
-        "A setup cancelled before starting makes no filesystem changes"
-      ]
-    },
-    {
-      "passed": 13,
-      "checks": [
-        "VocabularyDatabase.exe reports version 1.1.0.0",
+        "VocabularyDatabase.exe reports version 1.2.0.0",
         "VocabularyDatabase.exe uses the new product name",
-        "Vocabulary-Database-Setup-1.1.exe reports version 1.1.0.0",
-        "Vocabulary-Database-Setup-1.1.exe uses the new product name",
+        "Vocabulary-Database-Setup-1.2.exe reports version 1.2.0.0",
+        "Vocabulary-Database-Setup-1.2.exe uses the new product name",
         "The installed executable has the new product name",
         "The main window displays Vocabulary Database",
-        "The application footer displays version 1.1",
-        "AI setup uses the new product name",
+        "The application footer displays version 1.2",
+        "The editor opens directly at the word and translation fields",
         "Installer title and heading use the new product name",
-        "Existing vocabulary and model paths remain compatible",
+        "Installation does not require choosing content settings",
+        "Existing vocabulary paths remain compatible",
         "Updating shortcuts replaces the previous product shortcut",
         "The new shortcut launches the renamed executable",
         "An unrelated shortcut is retained"
       ]
     }
   ],
-  "installerSHA256": "6642E57A116F813F38B5878FBE7CA4B03FD9B047A8B0C92285161D6B205177C1",
-  "sourceSHA256": "2B087EB4F752AD08B9269E78B98A7A37DD91F719EAF77D11764F54B7783D0656",
-  "cleanup": {
-    "formattedCSharpFiles": 22,
-    "unusedImportsRemoved": 14,
-    "obsoleteDevelopmentScriptsRemoved": 2,
-    "compilerWarnings": 0,
-    "warningsTreatedAsErrors": true,
-    "remainingLegacyIdentifiers": "Storage, upgrade and process compatibility"
-  }
+  "fileVersion": "1.2.0.0",
+  "compilerWarnings": 0,
+  "installerSHA256": "A39AB3A25103015B0046E67510BAB7239DD0CB459C866F59CB7E58335661FC71",
+  "sourceSHA256": "635BB6F36595C68E305F386BB8D0791955A8291D017651D13BE127ABA7757001"
 }

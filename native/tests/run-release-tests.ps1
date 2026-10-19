@@ -21,7 +21,6 @@ $application = Join-Path $extracted 'VocabularyDatabase.exe'
 Invoke-CheckProcess $application ('--self-test "' + (Join-Path $testRoot 'app') + '"')
 Invoke-CheckProcess $application ('--ui-test "' + (Join-Path $testRoot 'ui') + '"')
 Invoke-CheckProcess $setup ('"--upgrade-test=' + (Join-Path $testRoot 'upgrade') + '"')
-& (Join-Path $PSScriptRoot 'run-ai-setup-tests.ps1') -Application $application -OutputDirectory (Join-Path $testRoot 'ai')
 
 $framework = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319'
 $compiler = Join-Path $framework 'csc.exe'
@@ -44,12 +43,11 @@ $reports = @(
     'app\native-test-results.json',
     'ui\ui-regression-results.json',
     'upgrade\native-upgrade-results.json',
-    'ai\ai-setup-results.json',
     'branding\branding-results.json'
 )
 $results = @($reports | ForEach-Object { Get-Content -LiteralPath (Join-Path $testRoot $_) -Raw | ConvertFrom-Json })
 $summary = [ordered]@{
-    version = '1.1'
+    version = '1.2'
     passed = ($results | Measure-Object -Property passed -Sum).Sum
     tests = $results
 }

@@ -13,7 +13,6 @@ namespace Vocab
     public sealed class MainWindow : RetroWindow
     {
         public readonly Store Store;
-        public readonly LanguageChoice ExplanationLanguage;
         readonly ContentControl view = new ContentControl();
         readonly StackPanel sidebar = new StackPanel();
         readonly TextBlock status = Retro.Text("");
@@ -54,10 +53,9 @@ namespace Vocab
             }
         }
 
-        public MainWindow(Store store, LanguageChoice language) : base(AppInfo.Name, 1220, 820, true)
+        public MainWindow(Store store) : base(AppInfo.Name, 1220, 820, true)
         {
             Store = store;
-            ExplanationLanguage = language;
             MinWidth = 620;
             MinHeight = 400;
             var panel = new DockPanel();
@@ -198,7 +196,7 @@ namespace Vocab
 
         public void Edit(Card card)
         {
-            var w = new EditorWindow(Store, ExplanationLanguage, card)
+            var w = new EditorWindow(Store, card)
             {
                 Owner = this
             };

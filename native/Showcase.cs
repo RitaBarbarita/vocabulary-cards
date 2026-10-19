@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -70,8 +69,7 @@ namespace Vocab
                 Add(store, "break the ice", "romper el hielo", "A friendly question can help break the ice.", "B1", "learning", "Idioms", "Relationships");
                 Add(store, "a piece of cake", "pan comido", "The exam was a piece of cake.", "A2", "new", "Idioms", "Studies");
                 store.Save();
-                var language = AIPreferences.Languages().First(l => l.Code == "es");
-                var main = new MainWindow(store, language)
+                var main = new MainWindow(store)
                 {
                     Width = 1280,
                     Height = 790
@@ -95,13 +93,13 @@ namespace Vocab
                 NativeTests.ShowOffscreen(detail);
                 Capture(detail, folder, "02-details.png", "More than a translation.", "Examples, grammar, dialogues and word connections, together.");
                 detail.Close();
-                var editor = new EditorWindow(store, language, featured)
+                var editor = new EditorWindow(store, featured)
                 {
                     Width = 800,
                     Height = 815
                 };
                 NativeTests.ShowOffscreen(editor);
-                Capture(editor, folder, "03-editor.png", "Room for your own understanding.", "Write it yourself or fill a draft with optional local AI.");
+                Capture(editor, folder, "03-editor.png", "Room for your own understanding.", "Examples, grammar and dialogues, written your way.");
                 editor.Close();
                 File.WriteAllText(Path.Combine(folder, "screenshots.json"), Json.Write(new { version = AppInfo.Version, contact = AppInfo.Contact, images = 5, data = "Synthetic demonstration cards" }));
                 return 0;
@@ -157,7 +155,7 @@ namespace Vocab
                 drawing.DrawRectangle(new SolidColorBrush(Color.FromRgb(0, 75, 75)), null, new Rect(x + 9, y + 9, window.ActualWidth, window.ActualHeight));
                 drawing.DrawImage(screen, new Rect(x, y, window.ActualWidth, window.ActualHeight));
                 Text(drawing, note, 15, new SolidColorBrush(Color.FromRgb(217, 236, 236)), 110, 989);
-                Text(drawing, "WINDOWS  ·  LOCAL AI  ·  YOUR DATA STAYS WITH YOU", 10, new SolidColorBrush(Color.FromRgb(170, 208, 208)), 110, 1024);
+                Text(drawing, "WINDOWS  ·  FLASHCARDS  ·  YOUR DATA STAYS WITH YOU", 10, new SolidColorBrush(Color.FromRgb(170, 208, 208)), 110, 1024);
             }
 
             var output = new RenderTargetBitmap(2160, 1620, 144, 144, PixelFormats.Pbgra32);

@@ -1,6 +1,6 @@
 param(
     [string]$OutputDirectory = (Join-Path (Split-Path $PSScriptRoot -Parent) 'outputs'),
-    [string]$SetupFileName = 'Vocabulary-Database-Setup-1.1.exe'
+    [string]$SetupFileName = 'Vocabulary-Database-Setup-1.2.exe'
 )
 $ErrorActionPreference = 'Stop'
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
@@ -29,8 +29,8 @@ try {
         $resources += '/resource:' + $icon.FullName + ',Icons.' + $icon.Name
     }
     $appFiles = @(
-        'AppInfo.cs', 'Startup.cs', 'Data.cs', 'Retro.cs', 'Languages.cs',
-        'Engine.cs', 'ProcessHelper.cs', 'AI.cs', 'Tables.cs', 'Biff.cs',
+        'AppInfo.cs', 'Startup.cs', 'Data.cs', 'Retro.cs',
+        'Tables.cs', 'Biff.cs',
         'Migration.cs', 'MainWindow.cs', 'CardView.cs', 'EditorWindow.cs',
         'StudyImport.cs', 'NativeTests.cs', 'CenteredCardsPanel.cs',
         'UIRegressionTests.cs', 'Showcase.cs'
@@ -46,7 +46,7 @@ try {
         '/resource:Assets\app-icon.ico,Package.IconIco',
         '/resource:uninstall.cmd,Package.Uninstall'
     )
-    & $compiler /nologo /target:winexe /optimize+ /warn:4 /warnaserror+ ('/out:' + (Join-Path $outputFolder $SetupFileName)) /win32icon:Assets\app-icon.ico @references @resources @package Installer.cs AppInfo.cs Retro.cs Languages.cs
+    & $compiler /nologo /target:winexe /optimize+ /warn:4 /warnaserror+ ('/out:' + (Join-Path $outputFolder $SetupFileName)) /win32icon:Assets\app-icon.ico @references @resources @package Installer.cs AppInfo.cs Retro.cs
     if ($LASTEXITCODE -ne 0) { throw 'Installer build failed' }
     Get-Item -LiteralPath (Join-Path $outputFolder $SetupFileName) | Select-Object FullName, Length
 }
