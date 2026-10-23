@@ -162,17 +162,24 @@ namespace Vocab
             };
             try
             {
+                File.WriteAllText(Path.Combine(folder, AppInfo.ExecutableName), "version 1.2 app");
+                File.WriteAllText(Path.Combine(folder, AppInfo.ExecutableName + ".config"), "version 1.2 config");
                 File.WriteAllText(Path.Combine(folder, AppInfo.LegacyExecutableName), "previous app");
                 File.WriteAllText(Path.Combine(folder, AppInfo.LegacyExecutableName + ".config"), "previous config");
                 File.WriteAllText(Path.Combine(folder, "english-vocab-db.html"), "previous HTML");
                 string data = Path.Combine(folder, "NativeData");
                 Directory.CreateDirectory(data);
                 File.WriteAllText(Path.Combine(data, "vocabulary.json"), "existing vocabulary");
+                Directory.CreateDirectory(Path.Combine(data, "images"));
+                File.WriteAllBytes(Path.Combine(data, "images", "existing-image"), new byte[] { 1, 2, 3, 4 });
                 StopPrevious(folder);
                 Backup(folder);
                 Extract(folder);
                 RemoveLegacyExecutable(folder);
                 string backup = Directory.GetDirectories(Path.Combine(folder, "Backups")).Single();
+                check(File.ReadAllText(Path.Combine(backup, AppInfo.ExecutableName)) == "version 1.2 app", "Version 1.2 application is backed up before replacement");
+                check(File.ReadAllText(Path.Combine(backup, AppInfo.ExecutableName + ".config")) == "version 1.2 config", "Version 1.2 configuration is backed up before replacement");
+                check(File.ReadAllBytes(Path.Combine(data, "images", "existing-image")).SequenceEqual(new byte[] { 1, 2, 3, 4 }), "Existing attachment bytes are retained on upgrade");
                 check(File.ReadAllText(Path.Combine(backup, AppInfo.LegacyExecutableName)) == "previous app", "Previous app is backed up");
                 check(File.ReadAllText(Path.Combine(backup, AppInfo.LegacyExecutableName + ".config")) == "previous config", "Previous configuration is backed up");
                 check(File.ReadAllText(Path.Combine(backup, "english-vocab-db.html")) == "previous HTML", "Previous HTML is backed up");
@@ -185,7 +192,7 @@ namespace Vocab
                 check(AppInfo.InstallDirectory(programs) == Path.Combine(programs, AppInfo.Name), "New installations use the new product folder");
                 Directory.CreateDirectory(Path.Combine(programs, AppInfo.LegacyName));
                 check(AppInfo.InstallDirectory(programs) == Path.Combine(programs, AppInfo.LegacyName), "Upgrades reuse the existing installation folder");
-                check(AssemblyName.GetAssemblyName(Path.Combine(folder, AppInfo.ExecutableName)).Version.ToString() == AppInfo.AssemblyVersion, "Packaged application version is 1.2.0.0");
+                check(AssemblyName.GetAssemblyName(Path.Combine(folder, AppInfo.ExecutableName)).Version.ToString() == AppInfo.AssemblyVersion, "Packaged application version is 1.3.0.0");
                 File.WriteAllText(Path.Combine(root, "native-upgrade-results.json"), new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(new { passed = checks.Count, checks = checks }));
                 return 0;
             }

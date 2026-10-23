@@ -20,6 +20,7 @@ Invoke-CheckProcess $setup ('"--extract-test=' + $extracted + '"')
 $application = Join-Path $extracted 'VocabularyDatabase.exe'
 Invoke-CheckProcess $application ('--self-test "' + (Join-Path $testRoot 'app') + '"')
 Invoke-CheckProcess $application ('--ui-test "' + (Join-Path $testRoot 'ui') + '"')
+Invoke-CheckProcess $application ('--fixes-test "' + (Join-Path $testRoot 'fixes') + '"')
 Invoke-CheckProcess $setup ('"--upgrade-test=' + (Join-Path $testRoot 'upgrade') + '"')
 
 $framework = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319'
@@ -42,12 +43,13 @@ if ($LASTEXITCODE -ne 0) { throw 'Branding verification failed' }
 $reports = @(
     'app\native-test-results.json',
     'ui\ui-regression-results.json',
+    'fixes\bug-fix-results.json',
     'upgrade\native-upgrade-results.json',
     'branding\branding-results.json'
 )
 $results = @($reports | ForEach-Object { Get-Content -LiteralPath (Join-Path $testRoot $_) -Raw | ConvertFrom-Json })
 $summary = [ordered]@{
-    version = '1.2'
+    version = '1.3'
     passed = ($results | Measure-Object -Property passed -Sum).Sum
     tests = $results
 }

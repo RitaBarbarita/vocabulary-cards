@@ -1,12 +1,12 @@
 # Vocabulary Database
 
-A Windows vocabulary manager with a classic interface, detailed study cards and flashcard practice. Write your own entries, organise the collection and study offline. Current version: **1.2**.
+A Windows vocabulary manager with a classic interface, detailed study cards and flashcard practice. Write your own entries, organise the collection and study offline. Current version: **1.3**.
 
-![Vocabulary Database 1.2 — cards and filters](./screenshots/01-cards.png)
+![Vocabulary Database 1.3 — cards and filters](./screenshots/01-cards.png)
 
 ## Download and install
 
-1. Download [Vocabulary Database 1.2 for Windows](https://github.com/RitaBarbarita/vocabulary-cards/raw/refs/heads/main/Vocabulary-Database-Setup-1.2.exe).
+1. Download [Vocabulary Database 1.3 for Windows](https://github.com/RitaBarbarita/vocabulary-cards/raw/refs/heads/main/Vocabulary-Database-Setup-1.3.exe).
 2. Close the application if it is running, then run the installer and click **Install**.
 3. Open **Vocabulary Database** and add your first card.
 
@@ -22,22 +22,22 @@ To update, install over the existing version. Cards, images, categories and lear
 - Search, filters, a sortable table and flashcard practice.
 - Excel `.xlsx` and `.xls`, CSV and pasted-table import with column matching and duplicate detection; Excel export.
 - Centred card rows, incremental loading that keeps the scroll position and a **Back to top** button.
-- Local storage and offline use, with no account or subscription required.
+- Local storage and offline use, with no account or subscription required. This version has no AI assistant.
 
 ## Screenshots
 
 <table>
 <tr>
-<td width="50%"><strong>Card details</strong><br><img src="screenshots/02-details.png" alt="Vocabulary Database 1.2 card details with examples, grammar and dialogues"></td>
-<td width="50%"><strong>Card editor</strong><br><img src="screenshots/03-editor.png" alt="Vocabulary Database 1.2 editor for words, translations, examples and dialogues"></td>
+<td width="50%"><strong>Card details</strong><br><img src="screenshots/02-details.png" alt="Vocabulary Database 1.3 card details with examples, grammar and dialogues"></td>
+<td width="50%"><strong>Card editor</strong><br><img src="screenshots/03-editor.png" alt="Vocabulary Database 1.3 editor for words, translations, examples and dialogues"></td>
 </tr>
 <tr>
-<td width="50%"><strong>Vocabulary table</strong><br><img src="screenshots/04-table.png" alt="Vocabulary Database 1.2 sortable table"></td>
-<td width="50%"><strong>Flashcard practice</strong><br><img src="screenshots/05-flashcards.png" alt="Vocabulary Database 1.2 flashcard practice"></td>
+<td width="50%"><strong>Vocabulary table</strong><br><img src="screenshots/04-table.png" alt="Vocabulary Database 1.3 sortable table"></td>
+<td width="50%"><strong>Flashcard practice</strong><br><img src="screenshots/05-flashcards.png" alt="Vocabulary Database 1.3 flashcard practice"></td>
 </tr>
 </table>
 
-The screenshots show the actual version 1.2 interface with demonstration cards and Spanish translations. These cards are not installed with the application.
+The screenshots show the actual version 1.3 interface with demonstration cards and Spanish translations. These cards are not installed with the application.
 
 ## Creating cards
 
@@ -51,13 +51,22 @@ Cards and images are stored locally in `%LOCALAPPDATA%\English Vocab DB\NativeDa
 
 The interface uses C# and WPF. Microsoft Edge is used only for a one-time transfer from an older browser-based installation; the original browser profile is retained. The installer and source archive contain no personal vocabulary or attachments.
 
-## Version 1.2
+## Version 1.3
 
-Version 1.2 streamlines card entry and installation while retaining the collection, import/export tools and study screens. See the [changelog](./native/CHANGELOG.md).
+Version 1.3 fixes six issues in the application without AI:
+
+- Years and other numbers at the end of example sentences stay together.
+- Translations use black text in card details and PNG exports.
+- Closing details, cancelling edits and saving keep the list position and loaded cards; table edits also retain scrolling, selection and sorting.
+- Exported PNG cards include attached images.
+- A single click opens images at their original resolution, with **100%** and **Fit to window** controls.
+- Section and topic tags share a horizontal row and wrap when needed.
+
+See the [changelog](./native/CHANGELOG.md) and an [example exported card with an attachment](./screenshots/06-card-export.png).
 
 ## Source and build
 
-Source code, icons and build instructions are in [`native`](./native). A [source archive for version 1.2](https://github.com/RitaBarbarita/vocabulary-cards/raw/refs/heads/main/Vocabulary-Database-Source-1.2.zip) is also available.
+Source code, icons and build instructions are in [`native`](./native). A [source archive for version 1.3](https://github.com/RitaBarbarita/vocabulary-cards/raw/refs/heads/main/Vocabulary-Database-Source-1.3.zip) is also available.
 
 On Windows, run:
 
@@ -65,9 +74,9 @@ On Windows, run:
 powershell -NoProfile -ExecutionPolicy Bypass -File native\build.ps1
 ```
 
-The build downloads no packages. It writes `native\build\VocabularyDatabase.exe` and `outputs\Vocabulary-Database-Setup-1.2.exe`. Compiler warnings are treated as build errors.
+The build downloads no packages. It writes `native\build\VocabularyDatabase.exe` and `outputs\Vocabulary-Database-Setup-1.3.exe`. Compiler warnings are treated as build errors.
 
-The packaged application passed **98 checks**: 25 application checks, 48 UI checks, 11 upgrade checks and 14 product/version/editor/shortcut checks. See the [verification report](./verification/1.2.json) and [test instructions](./native/README.md#verification). Checks use isolated folders and synthetic data.
+The packaged application passed **124 checks**: 25 application checks, 48 UI checks, 23 checks for these fixes, 14 upgrade checks and 14 product/version/editor/shortcut checks. See the [verification report](./verification/1.3.json) and [test instructions](./native/README.md#verification). Checks use isolated folders and synthetic data.
 
 ## Contact
 

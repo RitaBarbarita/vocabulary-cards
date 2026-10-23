@@ -47,13 +47,13 @@ namespace Vocab
             var items = new List<UIElement>();
             if (!String.IsNullOrWhiteSpace(c.example))
             {
-                var parts = Regex.Split(c.example, @"\r?\n|(?=\d+\.\s)").Select(s => s.Trim()).Where(s => s.Length > 0).ToArray();
+                var parts = Regex.Split(c.example, @"\r\n|\r|\n").Select(s => s.Trim()).Where(s => s.Length > 0).ToArray();
                 for (int i = 0; i < parts.Length; i++)
                 {
                     var example = new StackPanel();
                     example.Children.Add(new TextBlock { Text = parts[i], TextWrapping = TextWrapping.Wrap, FontStyle = FontStyles.Italic, LineHeight = 18 });
                     if (i == 0 && !String.IsNullOrEmpty(c.exampleTr))
-                        example.Children.Add(new TextBlock { Text = c.exampleTr, TextWrapping = TextWrapping.Wrap, Foreground = Brushes.Gray, FontSize = 12, Margin = new Thickness(0, 4, 0, 0) });
+                        example.Children.Add(new TextBlock { Text = c.exampleTr, TextWrapping = TextWrapping.Wrap, Foreground = Brushes.Black, FontSize = 12, Margin = new Thickness(0, 4, 0, 0) });
                     items.Add(example);
                 }
             }
@@ -108,7 +108,7 @@ namespace Vocab
             };
             inner.Children.Add(Retro.Text(c.english, true, 20));
             if (!String.IsNullOrEmpty(c.russian))
-                inner.Children.Add(new TextBlock { Text = c.russian, TextWrapping = TextWrapping.Wrap, Foreground = Brushes.DimGray, FontSize = 14, Margin = new Thickness(0, 7, 0, 7) });
+                inner.Children.Add(new TextBlock { Text = c.russian, TextWrapping = TextWrapping.Wrap, Foreground = Brushes.Black, FontSize = 14, Margin = new Thickness(0, 7, 0, 7) });
             var meta = new WrapPanel();
             Action<string, Brush> tag = (s, b) =>
             {
@@ -173,34 +173,24 @@ namespace Vocab
             if (c.sections.Count > 0 || c.topics.Count > 0)
             {
                 inner.Children.Add(Retro.Heading("Tags", "tag"));
-                foreach (var list in new[]
-                {
-                    c.sections,
-                    c.topics
-                })
-                {
-                    var tags = new WrapPanel();
-                    foreach (var s in list)
-                        tags.Children.Add(new Border { Background = Brushes.DimGray, Margin = new Thickness(0, 0, 4, 3), Child = new TextBlock { Text = s, Foreground = Brushes.White, FontSize = 10, Padding = new Thickness(4, 2, 4, 2) } });
-                    inner.Children.Add(tags);
-                }
+                var tags = new WrapPanel { Name = "CardTags" };
+                foreach (var s in c.sections.Concat(c.topics).Distinct())
+                    tags.Children.Add(new Border { Background = Brushes.DimGray, Margin = new Thickness(0, 0, 4, 3), Child = new TextBlock { Text = s, Foreground = Brushes.White, FontSize = 10, Padding = new Thickness(4, 2, 4, 2) } });
+                inner.Children.Add(tags);
             }
 
             if (c.attachments.Count > 0)
             {
                 inner.Children.Add(Retro.Heading("Attached images", "attach"));
-                if (export)
-                    inner.Children.Add(Retro.White(String.Join("\n", c.attachments.Select(a => a.name))));
-                else
-                    foreach (var a in c.attachments)
-                        inner.Children.Add(Image(store, a, 520));
+                foreach (var a in c.attachments)
+                    inner.Children.Add(Image(store, a, 520, !export));
             }
 
             root.Children.Add(inner);
             return Retro.Frame(root);
         }
 
-        public static FrameworkElement Image(Store store, Attachment a, int maxWidth)
+        public static FrameworkElement Image(Store store, Attachment a, int maxWidth, bool interactive = true)
         {
             var p = new StackPanel
             {
@@ -220,7 +210,6 @@ namespace Vocab
                 bitmap.BeginInit();
                 bitmap.UriSource = new Uri(file);
                 bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                bitmap.DecodePixelWidth = maxWidth * 2;
                 bitmap.EndInit();
                 bitmap.Freeze();
                 var img = new System.Windows.Controls.Image
@@ -231,23 +220,31 @@ namespace Vocab
                     Stretch = Stretch.Uniform,
                     HorizontalAlignment = HorizontalAlignment.Left
                 };
-                img.MouseLeftButtonDown += (s, e) =>
+                if (interactive)
                 {
-                    if (e.ClickCount == 2)
+                    var open = new Button
                     {
-                        var w = new RetroWindow(a.name, 850, 700, true);
-                        w.Body = new ScrollViewer
+                        Name = "OpenAttachedImage",
+                        Content = img,
+                        ToolTip = "Open full-size image",
+                        Cursor = System.Windows.Input.Cursors.Hand,
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        Padding = new Thickness(0),
+                        Template = (ControlTemplate)Application.Current.Resources["FlatButton"]
+                    };
+                    open.Click += (s, e) =>
+                    {
+                        e.Handled = true;
+                        var w = new ImageViewerWindow(a.name, bitmap)
                         {
-                            Content = new System.Windows.Controls.Image
-                            {
-                                Source = bitmap,
-                                Stretch = Stretch.Uniform
-                            }
+                            Owner = Window.GetWindow(open)
                         };
                         w.ShowDialog();
-                    }
-                };
-                p.Children.Add(img);
+                    };
+                    p.Children.Add(open);
+                }
+                else
+                    p.Children.Add(img);
             }
             catch
             {
@@ -267,6 +264,45 @@ namespace Vocab
             };
             if (d.ShowDialog() == true)
                 Retro.SavePng(Content(store, c, true), d.FileName, 600, 2);
+        }
+    }
+
+    public sealed class ImageViewerWindow : RetroWindow
+    {
+        readonly System.Windows.Controls.Image image;
+        readonly ScrollViewer scroll;
+        readonly BitmapSource bitmap;
+        bool fit;
+
+        public ImageViewerWindow(string title, BitmapSource source) : base(title, Math.Min(1000, SystemParameters.WorkArea.Width - 30), Math.Min(780, SystemParameters.WorkArea.Height - 30), true)
+        {
+            bitmap = source;
+            image = new System.Windows.Controls.Image { Name = "FullSizeImage", Source = source, Stretch = Stretch.Uniform, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top };
+            scroll = new ScrollViewer { Content = image, HorizontalScrollBarVisibility = ScrollBarVisibility.Auto, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+            var dock = new DockPanel();
+            var buttons = Retro.Row(Retro.Button("Fit to window", null, () => SetFit(true)), Retro.Button("100%", null, () => SetFit(false)), Retro.Button("Close", null, () => Close()));
+            buttons.Margin = new Thickness(6);
+            DockPanel.SetDock(buttons, Dock.Top);
+            dock.Children.Add(buttons);
+            dock.Children.Add(scroll);
+            Body = dock;
+            scroll.SizeChanged += (s, e) => ResizeImage();
+            PreviewKeyDown += (s, e) => { if (e.Key == System.Windows.Input.Key.Escape) { e.Handled = true; Close(); } };
+            SetFit(false);
+        }
+
+        public void SetFit(bool value)
+        {
+            fit = value;
+            scroll.HorizontalScrollBarVisibility = scroll.VerticalScrollBarVisibility = fit ? ScrollBarVisibility.Disabled : ScrollBarVisibility.Auto;
+            ResizeImage();
+        }
+
+        void ResizeImage()
+        {
+            double scale = fit ? Math.Min(1, Math.Min(Math.Max(1, scroll.ActualWidth - 4) / bitmap.PixelWidth, Math.Max(1, scroll.ActualHeight - 4) / bitmap.PixelHeight)) : 1;
+            image.Width = bitmap.PixelWidth * scale;
+            image.Height = bitmap.PixelHeight * scale;
         }
     }
 

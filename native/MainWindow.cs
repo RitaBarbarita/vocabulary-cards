@@ -175,11 +175,68 @@ namespace Vocab
 
         public void Refresh()
         {
+            Refresh(false);
+        }
+
+        void Refresh(bool preservePosition)
+        {
             if (!ready)
                 return;
-            visible = 48;
+            double offset = preservePosition && current == "cards" && cardScroll != null ? cardScroll.VerticalOffset : 0;
+            var oldTable = preservePosition ? view.Content as DataGrid : null;
+            var oldTableScroll = TableScroll(oldTable);
+            double tableOffset = oldTableScroll == null ? 0 : oldTableScroll.VerticalOffset;
+            double horizontalOffset = oldTableScroll == null ? 0 : oldTableScroll.HorizontalOffset;
+            var selected = oldTable == null ? null : oldTable.SelectedItem as Card;
+            var sorts = oldTable == null ? null : oldTable.Items.SortDescriptions.ToArray();
+            if (!preservePosition)
+                visible = 48;
             Render();
             BuildSidebar();
+            if (preservePosition && current == "cards")
+            {
+                var target = cardScroll;
+                target.UpdateLayout();
+                target.ScrollToVerticalOffset(offset);
+            }
+            else if (oldTable != null)
+            {
+                var target = view.Content as DataGrid;
+                if (target == null)
+                    return;
+                foreach (var sort in sorts)
+                {
+                    target.Items.SortDescriptions.Add(sort);
+                    var column = target.Columns.OfType<DataGridTextColumn>().FirstOrDefault(c => ((Binding)c.Binding).Path.Path == sort.PropertyName);
+                    if (column != null)
+                        column.SortDirection = sort.Direction;
+                }
+                if (selected != null)
+                    target.SelectedItem = Filtered.FirstOrDefault(c => c.id == selected.id);
+                target.UpdateLayout();
+                var targetScroll = TableScroll(target);
+                if (targetScroll != null)
+                {
+                    targetScroll.ScrollToVerticalOffset(tableOffset);
+                    targetScroll.ScrollToHorizontalOffset(horizontalOffset);
+                }
+            }
+        }
+
+        static ScrollViewer TableScroll(DependencyObject parent)
+        {
+            if (parent == null)
+                return null;
+            var scroll = parent as ScrollViewer;
+            if (scroll != null)
+                return scroll;
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                scroll = TableScroll(VisualTreeHelper.GetChild(parent, i));
+                if (scroll != null)
+                    return scroll;
+            }
+            return null;
         }
 
         void Render()
@@ -201,7 +258,10 @@ namespace Vocab
                 Owner = this
             };
             w.ShowDialog();
-            Refresh();
+            if (w.Saved)
+                Refresh(true);
+            else
+                BuildSidebar();
         }
 
         public void Detail(Card card)
@@ -216,7 +276,6 @@ namespace Vocab
                 Edit(card);
             };
             w.ShowDialog();
-            Refresh();
         }
 
         void Delete(Card c)
@@ -225,14 +284,14 @@ namespace Vocab
                 return;
             Store.Data.cards.Remove(c);
             Store.Save();
-            Refresh();
+            Refresh(true);
         }
 
         void Fav(Card c)
         {
             c.favorite = !c.favorite;
             Store.Save();
-            Refresh();
+            Refresh(true);
         }
 
         void RenderCards()

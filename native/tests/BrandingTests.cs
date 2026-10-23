@@ -58,7 +58,7 @@ internal static class BrandingTests
             })
             {
                 var info = FileVersionInfo.GetVersionInfo(assembly.Location);
-                Check(info.FileVersion == "1.2.0.0" && info.ProductVersion == "1.2.0.0", Path.GetFileName(assembly.Location) + " reports version 1.2.0.0");
+                Check(info.FileVersion == "1.3.0.0" && info.ProductVersion == "1.3.0.0", Path.GetFileName(assembly.Location) + " reports version 1.3.0.0");
                 Check(info.ProductName == ProductName && info.FileDescription.StartsWith(ProductName), Path.GetFileName(assembly.Location) + " uses the new product name");
             }
 
@@ -72,7 +72,7 @@ internal static class BrandingTests
             var main = (Window)Activator.CreateInstance(app.GetType("Vocab.MainWindow"), store);
             Show(main);
             Check(main.Title == ProductName, "The main window displays Vocabulary Database");
-            Check(Find<TextBlock>(main).Single(t => t.Name == "AppCredit").Text.StartsWith("Version 1.2  "), "The application footer displays version 1.2");
+            Check(Find<TextBlock>(main).Single(t => t.Name == "AppCredit").Text.StartsWith("Version 1.3  "), "The application footer displays version 1.3");
             main.Close();
             var editor = (Window)Activator.CreateInstance(app.GetType("Vocab.EditorWindow"), new object[] { store, null });
             Show(editor);

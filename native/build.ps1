@@ -1,6 +1,6 @@
 param(
     [string]$OutputDirectory = (Join-Path (Split-Path $PSScriptRoot -Parent) 'outputs'),
-    [string]$SetupFileName = 'Vocabulary-Database-Setup-1.2.exe'
+    [string]$SetupFileName = 'Vocabulary-Database-Setup-1.3.exe'
 )
 $ErrorActionPreference = 'Stop'
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
@@ -33,7 +33,7 @@ try {
         'Tables.cs', 'Biff.cs',
         'Migration.cs', 'MainWindow.cs', 'CardView.cs', 'EditorWindow.cs',
         'StudyImport.cs', 'NativeTests.cs', 'CenteredCardsPanel.cs',
-        'UIRegressionTests.cs', 'Showcase.cs'
+        'UIRegressionTests.cs', 'BugFixTests.cs', 'Showcase.cs'
     )
     & $compiler /nologo /target:winexe /optimize+ /warn:4 /warnaserror+ /out:build\VocabularyDatabase.exe /win32icon:Assets\app-icon.ico /resource:fixtures\excel-biff8.xls,Fixtures.Excel @references @resources @appFiles
     if ($LASTEXITCODE -ne 0) { throw 'Application build failed' }

@@ -33,6 +33,8 @@ namespace Vocab
                 return NativeTests.Run(args.Length > 1 ? args[1] : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "test-output"));
             if (args.Length > 1 && args[0] == "--ui-test")
                 return UIRegressionTests.Run(args[1]);
+            if (args.Length > 1 && args[0] == "--fixes-test")
+                return BugFixTests.Run(args[1]);
             if (args.Length > 1 && args[0] == "--screenshots")
                 return Showcase.Run(args[1]);
             bool owner;
